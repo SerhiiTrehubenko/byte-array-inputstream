@@ -1,5 +1,6 @@
 package com.trehubenko.bytearray;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 public class ByteArrayInputStream extends InputStream {
@@ -18,7 +19,7 @@ public class ByteArrayInputStream extends InputStream {
     }
 
     @Override
-    public int read() {
+    public int read() throws IOException {
         ensureIsOpen();
         if (position == buffer.length) {
             return -1;
@@ -27,12 +28,12 @@ public class ByteArrayInputStream extends InputStream {
     }
 
     @Override
-    public int read(byte[] b) {
+    public int read(byte[] b) throws IOException {
         return read(b, 0, b.length);
     }
 
     @Override
-    public int read(byte[] b, int off, int len) {
+    public int read(byte[] b, int off, int len) throws IOException {
         ensureIsOpen();
         if (off > b.length | len > b.length | Math.abs(len + off) > b.length | off < 0 | len < 0) {
             throw new IndexOutOfBoundsException("array length = b[" + b.length + "]" + ", off = " + off + ", len = " + len);
@@ -58,9 +59,9 @@ public class ByteArrayInputStream extends InputStream {
         buffer = null;
     }
 
-    private void ensureIsOpen() {
+    private void ensureIsOpen() throws IOException {
         if (buffer == null) {
-            throw new RuntimeException("InputStream is closed");
+            throw new IOException("InputStream is closed");
         }
     }
 }
