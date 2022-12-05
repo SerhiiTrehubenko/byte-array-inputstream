@@ -48,11 +48,17 @@ public class BufferedInputStream extends InputStream {
             return 0;
         }
 
-        if (len >= buffer.length && inputStream.available() > 0) {
-            return readFromBufferAndInputStream(b, off, len);
+        int readBytes;
+
+        if (len > count - position) {
+            readBytes = readFromBufferAndInputStream(b, off, len);
+        } else {
+            System.arraycopy(buffer, position, b, off, len);
+            position+= len;
+            readBytes = len;
         }
 
-        return readFromBuffer(b, off, len);
+        return readBytes;
     }
 
     @Override
@@ -73,33 +79,13 @@ public class BufferedInputStream extends InputStream {
         count += readCount;
     }
 
-    private int readFromBuffer(byte[] b, int off, int len) throws IOException {
-        int remainderBytesToReadInBuffer = count - position;
-        int readBytes = 0;
-
-        if (remainderBytesToReadInBuffer > 0 && remainderBytesToReadInBuffer < len) {
-            readBytes = readFromBufferAndInputStream(b, off, len);
-        } else if (remainderBytesToReadInBuffer == 0) {
-            fillBuffer();
-            readBytes += readFromBuffer(b, off, len);
-        } else {
-            if ((count - position) < 0) {
-                return -1;
-            }
-            System.arraycopy(buffer, position, b, off, len);
-            position += len;
-            readBytes = len;
-        }
-        return readBytes;
-    }
-
     private int readFromBufferAndInputStream(byte[] b, int off, int len) throws IOException {
-        int writtenBytesToDestArray = count - position;
-        System.arraycopy(buffer, position, b, off, writtenBytesToDestArray);
-        position += writtenBytesToDestArray;
-        int resultInputRead = inputStream.read(b, off + writtenBytesToDestArray, len - writtenBytesToDestArray);
-        writtenBytesToDestArray += resultInputRead < 0 ? 0 : resultInputRead;
+        int readBytesToDestArray = count - position;
+        System.arraycopy(buffer, position, b, off, readBytesToDestArray);
+        position += readBytesToDestArray;
+        int resultInputRead = inputStream.read(b, off + readBytesToDestArray, len - readBytesToDestArray);
+        readBytesToDestArray += resultInputRead < 0 && readBytesToDestArray == 0 ? -1 : resultInputRead;
 
-        return writtenBytesToDestArray;
+        return readBytesToDestArray;
     }
 }
